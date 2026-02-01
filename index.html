@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Be My Valentine, Zaman? 💖</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap"
+        rel="stylesheet">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff4d6d;
+            --secondary-color: #ff758f;
+            --bg-color: #fff0f3;
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.5);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #feada6 100%);
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #d63384;
+            position: relative;
+            /* Prevent scrolling on mobile */
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        /* Floating Hearts Background */
+        .bg-hearts {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+            /* Ensure hearts don't cause scrollbars */
+            pointer-events: none;
+        }
+
+        .heart {
+            position: absolute;
+            bottom: -100px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.4);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 50% 75%, 18% 100%, 0% 38%);
+            animation: floatUp 6s linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-120vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .container {
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 2px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 90%;
+            width: 380px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            transition: transform 0.3s ease;
+
+            /* Ensure it fits on small screens without scrolling if possible */
+            max-height: 90vh;
+            overflow-y: auto;
+            /* Hide scrollbar for cleaner look */
+            scrollbar-width: none;
+        }
+
+        .glass-card::-webkit-scrollbar {
+            display: none;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            font-family: 'Pacifico', cursive;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #c9184a;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .message {
+            font-size: 1.1rem;
+            color: #7209b7;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            min-height: 60px;
+            /* Space for buttons */
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            /* Prevent button text selection/highlighting on rapid taps */
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        #yes-btn {
+            background: linear-gradient(45deg, #ff4d6d, #ff8fa3);
+            color: white;
+        }
+
+        #yes-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(255, 77, 109, 0.4);
+        }
+
+        #no-btn {
+            background: white;
+            color: #ff4d6d;
+            border: 2px solid #ff4d6d;
+        }
+
+        /* Success Screen */
+        .success-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .gif-container img {
+            border-radius: 15px;
+            max-width: 100%;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive text */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .glass-card {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-hearts" id="heart-container"></div>
+
+    <!-- Hidden Audio Player -->
+    <audio id="bg-music" loop autoplay>
+        <source src="music.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        // Try to play immediately
+        window.addEventListener('load', function () {
+            var audio = document.getElementById("bg-music");
+            audio.currentTime = 0; // Forced start from 00s
+
+
+            var promise = audio.play();
+
+            if (promise !== undefined) {
+                promise.then(_ => {
+                    // Autoplay started!
+                }).catch(error => {
+                    // Browser blocked 0-interaction autoplay.
+                    // We will brute-force listen for ANY activity (mouse move, scroll, key)
+                    // This is the closest we can get to "immediate" without a click.
+                    var startAudio = function () {
+                        audio.play().then(() => {
+                            // Success! Remove all listeners
+                            ['click', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(evt =>
+                                document.body.removeEventListener(evt, startAudio)
+                            );
+                        }).catch(e => {
+                            // If mousemove fails, we just keep waiting silently. No error popup.
+                        });
+                    };
+
+                    ['click', 'touchstart', 'keydown', 'scroll', 'mousemove'].forEach(evt =>
+                        document.body.addEventListener(evt, startAudio)
+                    );
+                });
+            }
+        });
+    </script>
+
+    <div class="glass-card" id="card">
+        <div class="question-content">
+            <h1>Hey Zaman! 🌹</h1>
+            <p class="message">
+                Every moment with you is magic.<br>
+                Will you make me the happiest person and be my Valentine? 🥺
+            </p>
+            <div class="btn-group">
+                <button id="yes-btn" onclick="acceptLove()">Yes! 💖</button>
+                <button id="no-btn">No 😅</button>
+            </div>
+        </div>
+
+        <div class="success-content" id="success">
+            <h1>YAY Zaman! 🎉💘</h1>
+            <div class="gif-container">
+                <img src="https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif" alt="Cute Celebration">
+                <!-- Fallback or better generic cute gif recommended if this link breaks, but standard Giphy usually works -->
+            </div>
+            <p class="message" style="margin-top: 20px; margin-bottom: 0;">
+                Best decision ever! Can't wait! ❤️🥹
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const noBtn = document.getElementById('no-btn');
+        const yesBtn = document.getElementById('yes-btn');
+        const card = document.getElementById('card');
+        const heartContainer = document.getElementById('heart-container');
+
+        // Create floating background hearts
+        function createHearts() {
+            for (let i = 0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = Math.random() * 3 + 3 + 's';
+                heart.style.animationDelay = Math.random() * 2 + 's';
+                heartContainer.appendChild(heart);
+            }
+        }
+        createHearts();
+
+        // Game State
+        const phrases = [
+            "No 😅",
+            "Wait, are you sure? 🥺",
+            "Really? 😢",
+            "Try again! 🤔",
+            "Haha, nice try! 😂",
+            "No escape! 😈"
+        ];
+        let level = 0;
+        let isRunningAway = false;
+
+        // Initialize button handling
+        noBtn.addEventListener('click', handleNoInteraction);
+        noBtn.addEventListener('mouseover', function () {
+            if (isRunningAway) {
+                moveButton(true); // Aggressive run in "No escape" mode
+            }
+        });
+
+        // Also handle touch for aggressive mode
+        noBtn.addEventListener('touchstart', function (e) {
+            if (isRunningAway) {
+                e.preventDefault(); // Stop click
+                moveButton(true);
+            }
+        }, { passive: false });
+
+        function handleNoInteraction(e) {
+            e.preventDefault();
+
+            // Advance game state
+            level++;
+
+            // Update Text
+            if (level < phrases.length) {
+                noBtn.innerText = phrases[level];
+            }
+
+            if (level >= phrases.length - 1) {
+                noBtn.innerText = phrases[phrases.length - 1];
+                isRunningAway = true;
+                moveButton(true); // Big jump to signal chaos
+            } else {
+                moveButton(false); // Short hop
+            }
+        }
+
+        function moveButton(aggressive) {
+            // FIX: Keep inside the frame (Card) as requested by user.
+            // We use position: absolute relative to the card.
+
+            // Ensure position is absolute
+            noBtn.style.position = "absolute";
+
+            // Get Card dimensions (containing block)
+            // We look at the card's content box/padding box
+            const cardRect = card.getBoundingClientRect();
+            const btnRect = noBtn.getBoundingClientRect();
+            const yesRect = yesBtn.getBoundingClientRect();
+
+            // Calculate Yes button relative position and dimensions
+            // Since everything is inside the card, we map everything to card-relative coordinates
+            const yesRel = {
+                left: yesRect.left - cardRect.left,
+                top: yesRect.top - cardRect.top,
+                width: yesRect.width,
+                height: yesRect.height
+            };
+
+            const btnWidth = btnRect.width;
+            const btnHeight = btnRect.height;
+
+            const maxX = card.offsetWidth - btnWidth - 20;
+            const maxY = card.offsetHeight - btnHeight - 20;
+            const minX = 20;
+            const minY = 20;
+
+            let newX, newY;
+            let overlap = false;
+            let attempts = 0;
+            const maxAttempts = 50; // Prevent infinite loop
+
+            do {
+                overlap = false;
+
+                if (aggressive || attempts > 5) {
+                    // Teleport anywhere in the card
+                    newX = Math.random() * (maxX - minX) + minX;
+                    newY = Math.random() * (maxY - minY) + minY;
+                } else {
+                    // Short jump with INTELLIGENT direction
+                    const currentLeft = noBtn.offsetLeft;
+                    const currentTop = noBtn.offsetTop;
+                    const range = 100; // Increased range
+                    const minJump = 40; // Minimum jump distance
+
+                    let deltaX = (Math.random() - 0.5) * range * 2;
+                    let deltaY = (Math.random() - 0.5) * range * 2;
+
+                    // 1. Force Minimum Jump Distance
+                    if (Math.abs(deltaX) < minJump) deltaX = deltaX > 0 ? minJump : -minJump;
+                    if (Math.abs(deltaY) < minJump) deltaY = deltaY > 0 ? minJump : -minJump;
+
+                    // 2. Wall Repulsion (Don't get stuck in corners)
+                    // If near left wall, force move right
+                    if (currentLeft < minX + 50) deltaX = Math.abs(deltaX);
+                    // If near right wall, force move left
+                    else if (currentLeft > maxX - 50) deltaX = -Math.abs(deltaX);
+
+                    // If near top wall, force move down
+                    if (currentTop < minY + 50) deltaY = Math.abs(deltaY);
+                    // If near bottom wall, force move up
+                    else if (currentTop > maxY - 50) deltaY = -Math.abs(deltaY);
+
+                    newX = currentLeft + deltaX;
+                    newY = currentTop + deltaY;
+                }
+
+                // Clamp to Card Boundaries
+                newX = Math.min(Math.max(minX, newX), maxX);
+                newY = Math.min(Math.max(minY, newY), maxY);
+
+                // Check collision with "Yes" button
+                // Add some padding/margin around Yes button so we don't just touch it
+                const padding = 10;
+
+                // Proposed No Button Rect
+                const noLeft = newX;
+                const noRight = newX + btnWidth;
+                const noTop = newY;
+                const noBottom = newY + btnHeight;
+
+                // Yes Button Rect (with padding)
+                const yesLeft = yesRel.left - padding;
+                const yesRight = yesRel.left + yesRel.width + padding;
+                const yesTop = yesRel.top - padding;
+                const yesBottom = yesRel.top + yesRel.height + padding;
+
+                // Axis-Aligned Bounding Box Collision
+                if (noLeft < yesRight &&
+                    noRight > yesLeft &&
+                    noTop < yesBottom &&
+                    noBottom > yesTop) {
+                    overlap = true;
+                }
+
+                attempts++;
+            } while (overlap && attempts < maxAttempts);
+
+            // Apply
+            noBtn.style.left = newX + "px";
+            noBtn.style.top = newY + "px";
+        }
+
+        function acceptLove() {
+            // If the button was moved to body, we should hide it too
+            noBtn.style.display = 'none';
+
+            // Hide question, show success
+            document.querySelector('.question-content').style.display = 'none';
+            document.getElementById('success').style.display = 'flex';
+
+            // Trigger Confetti
+            var duration = 3 * 1000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff4d6d', '#ff758f', '#ffffff']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff4d6d', '#ff758f', '#ffffff']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+
+</html>
